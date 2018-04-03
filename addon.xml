@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.video.colombiantv" name="ColombianTV" version="0.0.1" provider-name="Tim De Jong">
+  <requires>
+    <import addon="xbmc.python" version="2.24.0" />
+    <import addon="script.module.kodiswift" version="0.0.1" />
+  </requires>
+  <extension point="xbmc.python.pluginsource" library="addon.py">
+    <provides>video</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <platform>all</platform>
+    <language>en</language>
+    <summary lang="en">Summary for "ColombianTV"</summary>
+    <description lang="en">Description for "ColombianTV"</description>
+    <disclaimer lang="en">Disclaimer for "ColombianTV"</disclaimer>
+  </extension>
+</addon>
