@@ -3,6 +3,8 @@
   <requires>
     <import addon="xbmc.python" version="2.24.0" />
     <import addon="script.module.kodiswift" version="0.0.1" />
+    <import addon="script.module.beautifulsoup" version="3.0.8" />
+    <import addon="script.module.requests" />
   </requires>
   <extension point="xbmc.python.pluginsource" library="addon.py">
     <provides>video</provides>

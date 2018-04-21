@@ -1,39 +1,104 @@
 from bs4 import BeautifulSoup
 import requests
 import os
+from Models import Episode, Program, Channel
+    
+class Parser(object):
+    def __init__(self, url):
+        self.__url = url.strip()
+        
+    @property
+    def url(self):
+        return self.__url
+    
+    @property
+    def content(self):
+        result = requests.get(self.url)
+        return BeautifulSoup(result.content, "html.parser")
+    
+    def titleAndLinkFor(self, programHtml):
+        urlTag = programHtml.find("a")
+        return urlTag.contents[0], urlTag["href"].strip()
+       
+class ProgramsParser(Parser):
+    def __init__(self, programsUrl):
+        super(ProgramsParser, self).__init__(programsUrl)
+        self.__iterator = self.programsIterator()
+      
+    def episodesUrl(self, programUrl):
+        return os.path.join(programUrl, "capitulos").strip()
+    
+    @property
+    def imageUrls(self):
+        verticalImages = self.content.find_all("div", "views-field-field-imagen-vertical")
+        smallImages = self.content.find_all("div", "views-field-field-imagen-programa")
+        return verticalImages + smallImages
+     
+    def programsIterator(self):
+        programs = self.content.find_all("div", "views-field-title") # "views-field-field-imagen-programa")
+        for program, programImage in zip(programs, self.imageUrls):
+            title, url = self.titleAndLinkFor(program)            
+            imageUrl = programImage.find("img")["src"]
+            yield Program(url, title, imageUrl, EpisodesParser(self.episodesUrl(url)))
+            
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        return next(self.__iterator)
+    
+class EpisodesParser(Parser):
+    def __init__(self, episodesUrl):
+        super(EpisodesParser, self).__init__(episodesUrl)
+        self.__iterator = self.episodesIterator()
+        
+    def fill(self, htmlParts, episodes):
+        return htmlParts if len(htmlParts) > 0 else ["" for _ in range(len(episodes))]
+        
+    def episodesIterator(self):
+        episodes = self.content.find_all("div", "views-field-title")
+        episodeImages = self.content.find_all("div", "views-field-field-imagen-video")
+        alternativeImages = self.content.find_all("div", "views-field-field-imagen-nota") 
+        alternativeImages = self.fill(alternativeImages, episodes)
+        
+        episodeDescriptions = self.content.find_all("div", "views-field-field-descripcion")
+        episodeDescriptions = self.fill(episodeDescriptions, episodes)
+        
+        for episode, episodeImage, alternativeImage, episodeDescription in zip(episodes, episodeImages, alternativeImages, episodeDescriptions):
+            title, url = self.titleAndLinkFor(episode)
+            imagePart = episodeImage.find("img")
+            if not imagePart:
+                imagePart = alternativeImage.find("img")
+            imageUrl = "" if not imagePart else imagePart["src"]
+            description = "" if not episodeDescription else episodeDescription.find("div", "field-content").text
+            yield Episode(self.url, title, description, imageUrl)
+                  
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        return next(self.__iterator)
 
-baseUrl = r"http://www.canalrcn.com/"
+class RcnScraper(object):
+    @property
+    def baseUrl(self):
+        return r"http://www.canalrcn.com/"
+    
+    @property
+    def programsUrl(self):
+        return os.path.join(self.baseUrl, "programas")
+    
+    @property
+    def channels(self):        
+        return [Channel(self.baseUrl, "RCN", ProgramsParser(self.programsUrl))]
 
-def parseUrlContent(url):
-    result = requests.get(url)
-    return BeautifulSoup(result.content, "html.parser")
+    def channelFor(self, name):
+        return Channel(self.baseUrl, "RCN", ProgramsParser(self.programsUrl))
 
-def programsUrl():
-    return os.path.join(baseUrl, "programas")
-
-def episodesUrl(programUrl):
-    return os.path.join(programUrl, "capitulos")
-
-def titleAndLinkFor(programHtml):
-    urlTag = programHtml.find("a")
-    return urlTag.contents[0], urlTag["href"]
-
-def episodesFor(episodesUrl):
-    parsedEpisodes = parseUrlContent(episodesUrl)
-    episodes = parsedEpisodes.find_all("div", "views-field-title")
-    for episode in episodes:
-        title, url = titleAndLinkFor(episode)
-        print("   {}: {}".format(title, url))
-
-soup = parseUrlContent(programsUrl())
-
-programs = soup.find_all("div", "views-field-title") # "views-field-field-imagen-programa")
-for program in programs:
-    title, url = titleAndLinkFor(program)
-    print("{}: {}".format(title, url))
-    episodesFor(episodesUrl(url))
-
-
-
-
+    def programFor(self, programName):
+        programsParser = ProgramsParser(self.programsUrl)
+        for program in programsParser:
+            if program.title == programName:
+                return program
+        return None
 
