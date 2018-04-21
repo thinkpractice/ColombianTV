@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import os
 
 class Episode(object):
@@ -23,8 +24,9 @@ class Episode(object):
     def imageUrl(self):
         return self.__imageUrl
 
-    def toItem(plugin):
+    def toItem(self, plugin):
         return {"label" : self.title,
+                "icon" : self.imageUrl,
                 "path"  : "",
                 "is_playable" : True
                 }
@@ -52,9 +54,12 @@ class Program(object):
     def episodes(self):
         return self.__episodes
 
-    def toItem(plugin):
+    def toItem(self, plugin):
         return {"label" : self.title,
-                "path"  : plugin.url_for("show_episodes", programName=self.title) ,
+                "path"  : plugin.url_for("show_episodes", programUrl=self.url
+                    ) ,
+
+                "icon" : self.imageUrl,
                 "is_playable" : False
                 }
 
@@ -78,6 +83,6 @@ class Channel(object):
    
     def toItem(self, plugin):
         return {"label" : self.name,
-                "path"  : plugin.url_for("show_programs", channelName=self.name) ,
+                "path"  : plugin.url_for("show_programs", channelUrl=self.url) ,
                 "is_playable" : False
                 }

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from bs4 import BeautifulSoup
 import requests
 import os
@@ -47,6 +48,9 @@ class ProgramsParser(Parser):
     def __next__(self):
         return next(self.__iterator)
     
+    def next(self):
+        return self.__next__()
+
 class EpisodesParser(Parser):
     def __init__(self, episodesUrl):
         super(EpisodesParser, self).__init__(episodesUrl)
@@ -79,6 +83,9 @@ class EpisodesParser(Parser):
     def __next__(self):
         return next(self.__iterator)
 
+    def next(self):
+        return self.__next__()
+
 class RcnScraper(object):
     @property
     def baseUrl(self):
@@ -92,13 +99,13 @@ class RcnScraper(object):
     def channels(self):        
         return [Channel(self.baseUrl, "RCN", ProgramsParser(self.programsUrl))]
 
-    def channelFor(self, name):
+    def channelFor(self, channelUrl):
         return Channel(self.baseUrl, "RCN", ProgramsParser(self.programsUrl))
 
-    def programFor(self, programName):
+    def programFor(self, programUrl):
         programsParser = ProgramsParser(self.programsUrl)
         for program in programsParser:
-            if program.title == programName:
+            if program.url == programUrl:
                 return program
         return None
 
