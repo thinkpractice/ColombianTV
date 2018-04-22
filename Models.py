@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from MediaStream import MediaStream
 import os
 
 class Episode(object):
@@ -27,7 +28,7 @@ class Episode(object):
     def toItem(self, plugin):
         return {"label" : self.title,
                 "icon" : self.imageUrl,
-                "path"  : "",
+                "path"  : MediaStream().getMediaStreamUrl(self.url),
                 "is_playable" : True
                 }
    
