@@ -5,6 +5,7 @@
     <import addon="script.module.kodiswift" version="0.0.1" />
     <import addon="script.module.beautifulsoup" version="3.0.8" />
     <import addon="script.module.requests" />
+    <import addon="script.module.m3u8" />
   </requires>
   <extension point="xbmc.python.pluginsource" library="addon.py">
     <provides>video</provides>
