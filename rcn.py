@@ -5,9 +5,14 @@ import os
 from Models import Episode, Program, Channel
     
 class Parser(object):
-    def __init__(self, url):
+    def __init__(self, baseUrl, url):
+        self.__baseUrl = baseUrl
         self.__url = url.strip()
         
+    @property
+    def baseUrl(self):
+        return self.__baseUrl
+
     @property
     def url(self):
         return self.__url
@@ -22,8 +27,8 @@ class Parser(object):
         return urlTag.contents[0], urlTag["href"].strip()
        
 class ProgramsParser(Parser):
-    def __init__(self, programsUrl):
-        super(ProgramsParser, self).__init__(programsUrl)
+    def __init__(self, baseUrl, programsUrl):
+        super(ProgramsParser, self).__init__(baseUrl, programsUrl)
         self.__iterator = self.programsIterator()
       
     def episodesUrl(self, programUrl):
@@ -40,7 +45,7 @@ class ProgramsParser(Parser):
         for program, programImage in zip(programs, self.imageUrls):
             title, url = self.titleAndLinkFor(program)            
             imageUrl = programImage.find("img")["src"]
-            yield Program(url, title, imageUrl, EpisodesParser(self.episodesUrl(url)))
+            yield Program(url, title, imageUrl, EpisodesParser(self.baseUrl, self.episodesUrl(url)))
             
     def __iter__(self):
         return self
@@ -52,8 +57,8 @@ class ProgramsParser(Parser):
         return self.__next__()
 
 class EpisodesParser(Parser):
-    def __init__(self, episodesUrl):
-        super(EpisodesParser, self).__init__(episodesUrl)
+    def __init__(self, baseUrl, episodesUrl):
+        super(EpisodesParser, self).__init__(baseUrl, episodesUrl)
         self.__iterator = self.episodesIterator()
         
     def fill(self, htmlParts, episodes):
@@ -75,7 +80,10 @@ class EpisodesParser(Parser):
                 imagePart = alternativeImage.find("img")
             imageUrl = "" if not imagePart else imagePart["src"]
             description = "" if not episodeDescription else episodeDescription.find("div", "field-content").text
-            yield Episode(self.url, title, description, imageUrl)
+            if url.startswith("/"):
+                url = url[1:]
+            episodeUrl = os.path.join(self.baseUrl, url)
+            yield Episode(episodeUrl, title, description, imageUrl)
                   
     def __iter__(self):
         return self
@@ -97,13 +105,13 @@ class RcnScraper(object):
     
     @property
     def channels(self):        
-        return [Channel(self.baseUrl, "RCN", ProgramsParser(self.programsUrl))]
+        return [Channel(self.baseUrl, "RCN", ProgramsParser(self.baseUrl, self.programsUrl))]
 
     def channelFor(self, channelUrl):
-        return Channel(self.baseUrl, "RCN", ProgramsParser(self.programsUrl))
+        return Channel(self.baseUrl, "RCN", ProgramsParser(self.baseUrl, self.programsUrl))
 
     def programFor(self, programUrl):
-        programsParser = ProgramsParser(self.programsUrl)
+        programsParser = ProgramsParser(self.baseUrl, self.programsUrl)
         for program in programsParser:
             if program.url == programUrl:
                 return program
