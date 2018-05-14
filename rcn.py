@@ -60,24 +60,37 @@ class EpisodesParser(Parser):
     def __init__(self, baseUrl, episodesUrl):
         super(EpisodesParser, self).__init__(baseUrl, episodesUrl)
         self.__iterator = self.episodesIterator()
-        
+        self.__episodes = []
+        self.__episodeImages = []
+    
+    @property
+    def episodes(self):
+        if not self.__episodes:
+            self.__episodes = self.content.find_all("div", "views-field-title") 
+        if not self.__episodes:    
+            self.__episodes = self.content.find_all("div", "contenedor-titulo-capitulos") 
+        return self.__episodes
+    
+    @property
+    def episodeImages(self):
+        if not self.__episodeImages:
+            self.__episodeImages = self.content.find_all("div", "views-field-field-imagen-video") 
+        if not self.__episodeImages:
+            self.__episodeImages = self.content.find_all("div", "views-field-field-imagen-nota") 
+        if not self.__episodeImages:
+            self.__episodeImages = self.content.find_all("div", "contenedor-img-capitulos") 
+        return self.__episodeImages    
+    
     def fill(self, htmlParts, episodes):
         return htmlParts if len(htmlParts) > 0 else ["" for _ in range(len(episodes))]
         
     def episodesIterator(self):
-        episodes = self.content.find_all("div", "views-field-title")
-        episodeImages = self.content.find_all("div", "views-field-field-imagen-video")
-        alternativeImages = self.content.find_all("div", "views-field-field-imagen-nota") 
-        alternativeImages = self.fill(alternativeImages, episodes)
-        
         episodeDescriptions = self.content.find_all("div", "views-field-field-descripcion")
-        episodeDescriptions = self.fill(episodeDescriptions, episodes)
+        episodeDescriptions = self.fill(episodeDescriptions, self.episodes)
         
-        for episode, episodeImage, alternativeImage, episodeDescription in zip(episodes, episodeImages, alternativeImages, episodeDescriptions):
+        for episode, episodeImage, episodeDescription in zip(self.episodes, self.episodeImages, episodeDescriptions):
             title, url = self.titleAndLinkFor(episode)
-            imagePart = episodeImage.find("img")
-            if not imagePart:
-                imagePart = alternativeImage.find("img")
+            imagePart = episodeImage.find("img")            
             imageUrl = "" if not imagePart else imagePart["src"]
             description = "" if not episodeDescription else episodeDescription.find("div", "field-content").text
             if url.startswith("/"):

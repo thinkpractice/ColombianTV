@@ -8,6 +8,7 @@ class Episode(object):
         self.__title = title
         self.__description = description
         self.__imageUrl = imageUrl
+        self.__mediaStreamUrl = None
     
     @property
     def url(self):
@@ -25,10 +26,19 @@ class Episode(object):
     def imageUrl(self):
         return self.__imageUrl
 
+    @property
+    def mediaStreamUrl(self):
+        if not self.__mediaStreamUrl:
+            try:
+                self.__mediaStreamUrl = MediaStream().getMediaStreamUrl(self.url)
+            except:
+                self.__mediaStreamUrl = "Not found"
+        return self.__mediaStreamUrl
+
     def toItem(self, plugin):
         return {"label" : self.title,
                 "icon" : self.imageUrl,
-                "path"  : MediaStream().getMediaStreamUrl(self.url),
+                "path"  : self.mediaStreamUrl,
                 "is_playable" : True
                 }
    
