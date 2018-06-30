@@ -32,7 +32,7 @@ class Episode(object):
             try:
                 self.__mediaStreamUrl = MediaStream().getMediaStreamUrl(self.url)
             except:
-                self.__mediaStreamUrl = "Not found"
+                self.__mediaStreamUrl = ""
         return self.__mediaStreamUrl
 
     def toItem(self, plugin):

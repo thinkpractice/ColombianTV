@@ -11,7 +11,10 @@ class MediaStream(object):
         videoFrames = [frame for frame in episodeHtml.find_all("iframe") if frame.has_attr("allowfullscreen")]
         if len(videoFrames) == 0:
             return ""
-        return r"https:" + videoFrames[0].get("src")
+        videoFrameUrl = videoFrames[0].get("src", "")
+        if not videoFrameUrl:
+            return videoFrameUrl
+        return r"https:" + videoFrameUrl
 
     def parsePlaylistForStreams(self, playlistUrl):
         m3u8_obj = m3u8.load(playlistUrl)
